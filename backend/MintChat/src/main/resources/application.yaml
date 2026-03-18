@@ -1,0 +1,9 @@
+spring:
+  application:
+    name: MintChat
+
+  profiles:
+    active: prod
+
+server:
+  port: 8080
