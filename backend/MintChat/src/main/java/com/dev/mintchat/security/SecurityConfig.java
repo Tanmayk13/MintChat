@@ -4,6 +4,7 @@ import com.dev.mintchat.service.CustomUserDetailsService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -36,6 +37,7 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers("/auth/**", "/ws/**").permitAll()
                         .anyRequest().authenticated()
                 )
@@ -52,8 +54,6 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
 
-        // Override in production with env var, e.g.:
-        // CORS_ALLOWED_ORIGIN_PATTERNS=https://your-frontend.com,https://www.your-frontend.com
         String raw = System.getenv("CORS_ALLOWED_ORIGIN_PATTERNS");
         List<String> allowed = (raw == null || raw.isBlank())
                 ? List.of("http://localhost:3000", "http://127.0.0.1:3000")
@@ -65,9 +65,8 @@ public class SecurityConfig {
         config.setAllowedOriginPatterns(allowed);
 
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
-        config.setAllowedHeaders(List.of("Authorization", "Content-Type"));
-        config.setExposedHeaders(List.of("Authorization"));
-        // SockJS uses XHR/fetch with credentials; this must be true to satisfy browser CORS rules.
+        config.setAllowedHeaders(List.of("*"));
+        config.setExposedHeaders(List.of("*"));
         config.setAllowCredentials(true);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
