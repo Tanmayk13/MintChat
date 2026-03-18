@@ -13,20 +13,27 @@ const configuredApi =
   process.env.NEXT_PUBLIC_API_BASE_URL ??
   readViteEnv("VITE_API_URL");
 
-const browserDefaultApi =
-  typeof window !== "undefined"
-    ? `${window.location.protocol}//${window.location.host}`
-    : undefined;
-
 const devDefaultApi = "http://localhost:8080";
 
-export const API = stripTrailingSlash(
-  configuredApi ??
-    (typeof window !== "undefined" &&
+function isLocalhostHost() {
+  return (
+    typeof window !== "undefined" &&
     (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1")
-      ? devDefaultApi
-      : browserDefaultApi ?? devDefaultApi),
-);
+  );
+}
+
+function resolveApiBaseUrl(): string {
+  if (configuredApi) return configuredApi;
+  if (isLocalhostHost()) return devDefaultApi;
+
+  // In production we *must* be explicit. Falling back to the frontend origin
+  // makes requests like `/auth/register` hit Next.js and return a 404 HTML page.
+  throw new Error(
+    "MintChat misconfigured: set NEXT_PUBLIC_API_BASE_URL (or NEXT_PUBLIC_API_URL) to your backend URL.",
+  );
+}
+
+export const API = stripTrailingSlash(resolveApiBaseUrl());
 
 export const WS = stripTrailingSlash(
   process.env.NEXT_PUBLIC_WS_URL ??
