@@ -19,6 +19,7 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 import java.util.List;
+import java.util.stream.Stream;
 
 @Configuration
 @EnableWebSecurity
@@ -51,11 +52,17 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
 
-        // Frontend dev + typical local variants
-        config.setAllowedOriginPatterns(List.of(
-                "http://localhost:3000",
-                "http://127.0.0.1:3000"
-        ));
+        // Override in production with env var, e.g.:
+        // CORS_ALLOWED_ORIGIN_PATTERNS=https://your-frontend.com,https://www.your-frontend.com
+        String raw = System.getenv("CORS_ALLOWED_ORIGIN_PATTERNS");
+        List<String> allowed = (raw == null || raw.isBlank())
+                ? List.of("http://localhost:3000", "http://127.0.0.1:3000")
+                : Stream.of(raw.split(","))
+                .map(String::trim)
+                .filter(s -> !s.isBlank())
+                .toList();
+
+        config.setAllowedOriginPatterns(allowed);
 
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("Authorization", "Content-Type"));

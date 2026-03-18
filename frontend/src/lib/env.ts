@@ -8,11 +8,24 @@ function stripTrailingSlash(v: string) {
   return v.replace(/\/$/, "");
 }
 
-export const API = stripTrailingSlash(
+const configuredApi =
   process.env.NEXT_PUBLIC_API_URL ??
-    process.env.NEXT_PUBLIC_API_BASE_URL ??
-    readViteEnv("VITE_API_URL") ??
-    "http://localhost:8080",
+  process.env.NEXT_PUBLIC_API_BASE_URL ??
+  readViteEnv("VITE_API_URL");
+
+const browserDefaultApi =
+  typeof window !== "undefined"
+    ? `${window.location.protocol}//${window.location.host}`
+    : undefined;
+
+const devDefaultApi = "http://localhost:8080";
+
+export const API = stripTrailingSlash(
+  configuredApi ??
+    (typeof window !== "undefined" &&
+    (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1")
+      ? devDefaultApi
+      : browserDefaultApi ?? devDefaultApi),
 );
 
 export const WS = stripTrailingSlash(
